@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proposal ❤️</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI', sans-serif;
+}
+
+body{
+    height:100vh;
+    overflow:hidden;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#ff758c,#ff7eb3);
+    color:white;
+}
+
+.container{
+    text-align:center;
+    z-index:10;
+    padding:30px;
+    max-width:800px;
+}
+
+h1{
+    font-size:3rem;
+    margin-bottom:15px;
+    animation:fadeIn 2s ease;
+}
+
+.message{
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+    line-height:1.8;
+    animation:fadeIn 3s ease;
+}
+
+.heart{
+    font-size:70px;
+    animation:beat 1s infinite;
+}
+
+.buttons{
+    margin-top:30px;
+}
+
+button{
+    border:none;
+    padding:15px 30px;
+    font-size:1.1rem;
+    border-radius:50px;
+    cursor:pointer;
+    margin:10px;
+    transition:.3s;
+}
+
+.yes-btn{
+    background:white;
+    color:#ff4f81;
+    font-weight:bold;
+}
+
+.yes-btn:hover{
+    transform:scale(1.1);
+}
+
+.no-btn{
+    background:#ff4f81;
+    color:white;
+}
+
+.result{
+    margin-top:25px;
+    font-size:1.5rem;
+    font-weight:bold;
+}
+
+.floating-heart{
+    position:absolute;
+    color:rgba(255,255,255,0.6);
+    animation:floatUp linear infinite;
+}
+
+@keyframes beat{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.2);}
+}
+
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(20px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+@keyframes floatUp{
+    from{
+        transform:translateY(100vh);
+        opacity:1;
+    }
+    to{
+        transform:translateY(-100px);
+        opacity:0;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="heart">❤️</div>
+
+    <h1 id="title"></h1>
+
+    <p class="message" id="message"></p>
+
+    <div class="buttons">
+        <button class="yes-btn" onclick="sayYes()">YES ❤️</button>
+        <button class="no-btn" id="noBtn">NO 😜</button>
+    </div>
+
+    <div class="result" id="result"></div>
+
+    <p style="margin-top:30px;font-size:1rem;" id="signature"></p>
+</div>
+
+<script>
+/* ==================================
+   CHANGE ONLY THESE TWO VARIABLES
+   ================================== */
+const gfName = "Poohja";
+const yourName = "Alagu Raja";
+
+/* ==================================
+   AUTO POPULATE CONTENT
+   ================================== */
+document.title = `For ${gfName} ❤️`;
+
+document.getElementById("title").textContent = `Dear ${gfName}`;
+
+document.getElementById("message").innerHTML = `
+    Every moment with you feels special.<br>
+    Your smile brightens my day, your presence brings me peace,
+    and my heart feels happiest when you're around.
+    <br><br>
+    <strong>${gfName}</strong>, you mean so much to me.
+    <br><br>
+    <strong>Will you be my girlfriend? ❤️</strong>
+`;
+
+document.getElementById("signature").innerHTML = `
+    Forever Yours,<br>
+    <strong>${yourName} ❤️</strong>
+`;
+
+function sayYes(){
+    document.getElementById("result").innerHTML =
+        `🎉 YAY ${gfName}! You just made ${yourName} the happiest person alive! ❤️💍`;
+}
+
+/* ==================================
+   RUNAWAY NO BUTTON
+   ================================== */
+const noBtn = document.getElementById("noBtn");
+
+noBtn.addEventListener("mouseover", () => {
+    const x = Math.random() * (window.innerWidth - 120);
+    const y = Math.random() * (window.innerHeight - 60);
+
+    noBtn.style.position = "absolute";
+    noBtn.style.left = x + "px";
+    noBtn.style.top = y + "px";
+});
+
+/* ==================================
+   FLOATING HEARTS
+   ================================== */
+function createHeart(){
+    const heart = document.createElement("div");
+    heart.classList.add("floating-heart");
+    heart.innerHTML = "❤️";
+
+    heart.style.left = Math.random() * window.innerWidth + "px";
+    heart.style.fontSize = (Math.random() * 30 + 15) + "px";
+    heart.style.animationDuration = (Math.random() * 4 + 4) + "s";
+
+    document.body.appendChild(heart);
+
+    setTimeout(() => {
+        heart.remove();
+    }, 8000);
+}
+
+setInterval(createHeart, 300);
+</script>
+
+</body>
+</html>
