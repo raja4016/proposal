@@ -23,6 +23,37 @@ body{
     color:white;
 }
 
+.loader{
+    text-align:center;
+}
+
+.spinner{
+    border:4px solid rgba(255,255,255,0.3);
+    border-top:4px solid white;
+    border-radius:50%;
+    width:50px;
+    height:50px;
+    animation:spin 1s linear infinite;
+    margin:0 auto 20px;
+}
+
+@keyframes spin{
+    0%{transform:rotate(0deg);}
+    100%{transform:rotate(360deg);}
+}
+
+.error-box{
+    background:rgba(255,255,255,0.2);
+    padding:20px;
+    border-radius:10px;
+    margin-top:20px;
+    max-width:600px;
+}
+
+.hidden{
+    display:none !important;
+}
+
 .container{
     text-align:center;
     z-index:10;
@@ -121,51 +152,141 @@ button{
 
 <body>
 
-<div class="container">
-    <div class="heart">❤️</div>
+<div class="loader" id="loader">
+    <div class="spinner"></div>
+    <h2>Loading your special page...</h2>
+    <p>Fetching data ❤️</p>
+</div>
 
-    <h1 id="title"></h1>
+<div class="error-box hidden" id="errorBox">
+    <h2>⚠️ Oops! Something went wrong</h2>
+    <p id="errorMessage"></p>
+    <button class="yes-btn" onclick="location.reload()" style="margin-top:15px;">🔄 Try Again</button>
+</div>
 
-    <p class="message" id="message"></p>
-
-    <div class="buttons">
-        <button class="yes-btn" onclick="sayYes()">YES ❤️</button>
-        <button class="no-btn" id="noBtn">NO 😜</button>
-    </div>
-
-    <div class="result" id="result"></div>
-
-    <p style="margin-top:30px;font-size:1rem;" id="signature"></p>
+<div class="container hidden" id="mainContent">
+    <!-- Content will be dynamically populated after fetching data -->
 </div>
 
 <script>
 /* ==================================
-   CHANGE ONLY THESE TWO VARIABLES
+   GOOGLE SHEET CONFIGURATION
    ================================== */
-const gfName = "karthiga";
-const yourName = "Alagu Raja";
+// NOTE: This needs to be the actual spreadsheet ID, not the published ID
+// To get it: Open your sheet → Copy the ID from URL between /d/ and /edit
+// Example: https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit
+const SHEET_ID = '1din2VmFGSud7-BRI6kbpoJFblZrXefqJ9xsXh3qD7xo';  // Replace with your actual sheet ID
+const GID = '0';  // Sheet tab ID (0 for first sheet)
 
 /* ==================================
-   AUTO POPULATE CONTENT
+   VARIABLES (POPULATED FROM SHEET)
    ================================== */
-document.title = `For ${gfName} ❤️`;
+let gfName = "Sora";  // Default fallback
+let yourName = "AlaguRaja";  // Default fallback
 
-document.getElementById("title").textContent = `Dear ${gfName}`;
+/* ==================================
+   FETCH DATA FROM GOOGLE SHEET
+   Using Google Visualization API with JSONP (bypasses CORS)
+   ================================== */
+function fetchDataFromSheet() {
+    return new Promise((resolve, reject) => {
+        // Create a unique callback name
+        const callbackName = 'gsheetCallback_' + Date.now();
+        const timeout = setTimeout(() => {
+            delete window[callbackName];
+            reject(new Error('Request timed out after 15 seconds. Please check your internet connection.'));
+        }, 15000);
 
-document.getElementById("message").innerHTML = `
-    Every moment with you feels special.<br>
-    Your smile brightens my day, your presence brings me peace,
-    and my heart feels happiest when you're around.
-    <br><br>
-    <strong>${gfName}</strong>, you mean so much to me.
-    <br><br>
-    <strong>Will you be my girlfriend? ❤️</strong>
-`;
+        // Google Visualization API callback
+        window[callbackName] = function(response) {
+            clearTimeout(timeout);
+            delete window[callbackName];
+            
+            try {
+                if (response.status === 'error') {
+                    reject(new Error('Google API error: ' + (response.errors?.[0]?.detailed_message || 'Unknown error')));
+                    return;
+                }
+                
+                const table = response.table;
+                const rows = table.rows;
+                
+                console.log('✅ Data fetched successfully');
+                console.log('📊 Total rows:', rows.length);
+                
+                // Extract data from rows
+                // Assuming row 0 has gfname, row 1 has boyname
+                if (rows.length >= 2) {
+                    const row0 = rows[0].c || [];
+                    const row1 = rows[1].c || [];
+                    
+                    // Get value from second column (index 1)
+                    gfName = row0[1]?.v ? String(row0[1].v) : gfName;
+                    yourName = row1[1]?.v ? String(row1[1].v) : yourName;
+                    
+                    console.log('📝 Extracted data:', { gfName, yourName });
+                }
+                
+                resolve({ gfName, yourName });
+                
+            } catch (e) {
+                reject(new Error('Failed to parse sheet data: ' + e.message));
+            }
+        };
 
-document.getElementById("signature").innerHTML = `
-    Forever Yours,<br>
-    <strong>${yourName} ❤️</strong>
-`;
+        // Inject script tag (JSONP — no CORS issues, works from file:// too)
+        const script = document.createElement('script');
+        script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}&gid=${GID}`;
+        script.onerror = () => {
+            clearTimeout(timeout);
+            delete window[callbackName];
+            reject(new Error('Failed to load Google Sheets. The sheet may not be shared publicly with "Anyone with the link".'));
+        };
+        document.body.appendChild(script);
+    });
+}
+
+/* ==================================
+   INITIALIZE PAGE CONTENT
+   ================================== */
+function initializePage() {
+    document.title = `For ${gfName} ❤️`;
+    
+    document.getElementById("mainContent").innerHTML = `
+        <div class="heart">❤️</div>
+        
+        <h1 id="title">Dear ${gfName}</h1>
+        
+        <p class="message">
+            Every moment with you feels special.<br>
+            Your smile brightens my day, your presence brings me peace,
+            and my heart feels happiest when you're around.
+            <br><br>
+            <strong>${gfName}</strong>, you mean so much to me.
+            <br><br>
+            <strong>Will you be my girlfriend? ❤️</strong>
+        </p>
+        
+        <div class="buttons">
+            <button class="yes-btn" onclick="sayYes()">YES ❤️</button>
+            <button class="no-btn" id="noBtn">NO 😜</button>
+        </div>
+        
+        <div class="result" id="result"></div>
+        
+        <p style="margin-top:30px;font-size:1rem;">
+            Forever Yours,<br>
+            <strong>${yourName} ❤️</strong>
+        </p>
+    `;
+    
+    // Hide loader and show content
+    document.getElementById("loader").classList.add("hidden");
+    document.getElementById("mainContent").classList.remove("hidden");
+    
+    // Setup runaway button
+    setupRunawayButton();
+}
 
 function sayYes(){
     document.getElementById("result").innerHTML =
@@ -173,39 +294,77 @@ function sayYes(){
 }
 
 /* ==================================
-   RUNAWAY NO BUTTON
+   SHOW ERROR ON PAGE
    ================================== */
-const noBtn = document.getElementById("noBtn");
+function showError(errorMessage) {
+    console.error('❌ Error:', errorMessage);
+    
+    document.getElementById("loader").classList.add("hidden");
+    document.getElementById("errorBox").classList.remove("hidden");
+    document.getElementById("errorMessage").innerHTML = `
+        <strong>Error Details:</strong><br>
+        ${errorMessage}
+        <br><br>
+        <strong>Possible Solutions:</strong><br>
+        • Make sure the Google Sheet is shared with "Anyone with the link"<br>
+        • Verify the SHEET_ID in the code is correct<br>
+        • Check your internet connection
+    `;
+}
 
-noBtn.addEventListener("mouseover", () => {
-    const x = Math.random() * (window.innerWidth - 120);
-    const y = Math.random() * (window.innerHeight - 60);
+/* ==================================
+   SETUP RUNAWAY NO BUTTON
+   ================================== */
+function setupRunawayButton() {
+    const noBtn = document.getElementById("noBtn");
+    
+    if (noBtn) {
+        noBtn.addEventListener("mouseover", () => {
+            const x = Math.random() * (window.innerWidth - 120);
+            const y = Math.random() * (window.innerHeight - 60);
+            
+            noBtn.style.position = "absolute";
+            noBtn.style.left = x + "px";
+            noBtn.style.top = y + "px";
+        });
+    }
+}
 
-    noBtn.style.position = "absolute";
-    noBtn.style.left = x + "px";
-    noBtn.style.top = y + "px";
+/* ==================================
+   LOAD DATA ON PAGE LOAD
+   ================================== */
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await fetchDataFromSheet();
+        initializePage();
+        startFloatingHearts();
+    } catch (error) {
+        showError(error.message);
+    }
 });
 
 /* ==================================
    FLOATING HEARTS
    ================================== */
-function createHeart(){
-    const heart = document.createElement("div");
-    heart.classList.add("floating-heart");
-    heart.innerHTML = "❤️";
-
-    heart.style.left = Math.random() * window.innerWidth + "px";
-    heart.style.fontSize = (Math.random() * 30 + 15) + "px";
-    heart.style.animationDuration = (Math.random() * 4 + 4) + "s";
-
-    document.body.appendChild(heart);
-
-    setTimeout(() => {
-        heart.remove();
-    }, 8000);
+function startFloatingHearts() {
+    function createHeart(){
+        const heart = document.createElement("div");
+        heart.classList.add("floating-heart");
+        heart.innerHTML = "❤️";
+        
+        heart.style.left = Math.random() * window.innerWidth + "px";
+        heart.style.fontSize = (Math.random() * 30 + 15) + "px";
+        heart.style.animationDuration = (Math.random() * 4 + 4) + "s";
+        
+        document.body.appendChild(heart);
+        
+        setTimeout(() => {
+            heart.remove();
+        }, 8000);
+    }
+    
+    setInterval(createHeart, 300);
 }
-
-setInterval(createHeart, 300);
 </script>
 
 </body>
